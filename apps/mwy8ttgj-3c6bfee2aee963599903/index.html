@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수업온 (ClassON) - 놓친 수업 없는 모두의 학습 플랫폼</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .tab-active {
+            border-bottom: 3px solid #4f46e5;
+            color: #4f46e5;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Logo -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white text-xl shadow-md shadow-indigo-200">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-xl tracking-tight text-slate-900">수업온</span>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">ClassON</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 hidden sm:block">놓친 수업 복습 & 보충 학습 지원 시스템</p>
+                    </div>
+                </div>
+
+                <!-- Mode Switcher & User Profile -->
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <!-- Mode Switch Toggle Button -->
+                    <div class="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200">
+                        <button id="btnModeStudent" onclick="switchMode('student')" class="px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-indigo-600 shadow-sm">
+                            <i class="fa-solid fa-user-graduate mr-1"></i> 학생 모드
+                        </button>
+                        <button id="btnModeTeacher" onclick="switchMode('teacher')" class="px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900">
+                            <i class="fa-solid fa-chalkboard-user mr-1"></i> 교사 모드
+                        </button>
+                    </div>
+
+                    <!-- Profile Info Badge -->
+                    <div class="hidden md:flex items-center gap-3 pl-3 border-l border-slate-200">
+                        <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center border border-indigo-200" id="userAvatar">
+                            김
+                        </div>
+                        <div class="text-xs">
+                            <p class="font-bold text-slate-800" id="userName">김수업 학생</p>
+                            <p class="text-slate-500" id="userRole">2학년 1반 01번</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Sub-bar -->
+    <nav class="bg-white border-b border-slate-200 shadow-2xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Student Sub-menu -->
+            <div id="studentNav" class="flex gap-6 text-sm font-medium">
+                <button onclick="switchTab('student-lessons')" id="tabBtnStudentLessons" class="py-3 px-1 tab-active flex items-center gap-2">
+                    <i class="fa-solid fa-book-open"></i> 전체 수업 목록
+                </button>
+                <button onclick="switchTab('student-dashboard')" id="tabBtnStudentDashboard" class="py-3 px-1 text-slate-500 hover:text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie"></i> 마이페이지 & 학습노트
+                </button>
+            </div>
+
+            <!-- Teacher Sub-menu -->
+            <div id="teacherNav" class="hidden flex gap-6 text-sm font-medium">
+                <button onclick="switchTab('teacher-upload')" id="tabBtnTeacherUpload" class="py-3 px-1 tab-active flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> 새 수업 등록
+                </button>
+                <button onclick="switchTab('teacher-tracking')" id="tabBtnTeacherTracking" class="py-3 px-1 text-slate-500 hover:text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-users-rectangle"></i> 학생별 보충 학습 현황
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+        <!-- ==================== TAB 1: STUDENT LESSONS LIST ==================== -->
+        <section id="viewStudentLessons" class="space-y-6">
+            <!-- Banner Notification -->
+            <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-600 rounded-2xl p-5 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="space-y-1 text-center md:text-left">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-xs font-medium backdrop-blur-md">
+                        <i class="fa-solid fa-bell"></i> 오늘의 결석/조퇴 보충 안내
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-bold">놓친 수업도 안심하고 온라인으로 보충하세요!</h2>
+                    <p class="text-indigo-100 text-sm">개인 맞춤 속도 조절, 강의 요약 및 학습지, 선생님 Q&A가 지원됩니다.</p>
+                </div>
+                <div class="flex gap-3">
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center min-w-[90px] border border-white/20">
+                        <span class="block text-2xl font-black" id="statPendingBadge">1</span>
+                        <span class="text-xs text-indigo-100">미완료 보충</span>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-3 text-center min-w-[90px] border border-white/20">
+                        <span class="block text-2xl font-black text-emerald-300" id="statCompletedBadge">2</span>
+                        <span class="text-xs text-indigo-100">이수 완료</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter & Search Controls -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
+                <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                    <!-- Search Input -->
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400"></i>
+                        <input type="text" id="searchInput" oninput="renderLessonCards()" placeholder="수업 제목, 단원명, 선생님 성함 검색..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Subject Filter -->
+                        <select id="filterSubject" onchange="renderLessonCards()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-700">
+                            <option value="ALL">전체 과목</option>
+                            <option value="국어">국어</option>
+                            <option value="수학">수학</option>
+                            <option value="영어">영어</option>
+                            <option value="사회">사회</option>
+                            <option value="과학">과학</option>
+                            <option value="예체능">예체능</option>
+                        </select>
+
+                        <!-- Tag Filter -->
+                        <select id="filterTag" onchange="renderLessonCards()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-700">
+                            <option value="ALL">전체 구분</option>
+                            <option value="결석보충">🔴 결석 보충 지정</option>
+                            <option value="조퇴보충">🟡 조퇴/결강 보충</option>
+                            <option value="자유복습">🟢 자유 복습</option>
+                        </select>
+
+                        <!-- Progress Status Filter -->
+                        <select id="filterStatus" onchange="renderLessonCards()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-700">
+                            <option value="ALL">전체 진행상태</option>
+                            <option value="PENDING">학습 필요 (미완료)</option>
+                            <option value="COMPLETED">완료됨</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Active Filter Tags -->
+                <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                    <span>총 <strong class="text-indigo-600" id="lessonCountText">0</strong>개의 수업이 검색되었습니다.</span>
+                    <button onclick="resetFilters()" class="text-slate-400 hover:text-indigo-600 flex items-center gap-1 font-medium">
+                        <i class="fa-solid fa-rotate-right"></i> 필터 초기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lessons Grid -->
+            <div id="lessonsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically generated lesson cards will go here -->
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: STUDENT DASHBOARD ==================== -->
+        <section id="viewStudentDashboard" class="hidden space-y-6">
+            <!-- Stats Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">전체 할당 수업</p>
+                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="dashTotalCount">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">이수 완료 수업</p>
+                        <h3 class="text-2xl font-bold text-emerald-600 mt-1" id="dashCompletedCount">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">결석/조퇴 미보충</p>
+                        <h3 class="text-2xl font-bold text-rose-500 mt-1" id="dashPendingCount">0</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">전체 달성률</p>
+                        <h3 class="text-2xl font-bold text-indigo-600 mt-1" id="dashRate">0%</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left 2 Cols: Saved Notes Collection -->
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-pen-to-square text-indigo-600"></i> 나의 학습 노트 모아보기
+                            </h3>
+                            <p class="text-xs text-slate-500">수업을 들으며 타임스탬프와 함께 적은 주요 메모입니다.</p>
+                        </div>
+                        <button onclick="exportNotesTxt()" class="text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center gap-1 transition-all">
+                            <i class="fa-solid fa-download"></i> 텍스트로 저장
+                        </button>
+                    </div>
+
+                    <div id="savedNotesContainer" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                        <!-- Dynamic Notes -->
+                    </div>
+                </div>
+
+                <!-- Right 1 Col: Recent Learning History & Missed Class Alert -->
+                <div class="space-y-6">
+                    <!-- Urgent Required Lessons List -->
+                    <div class="bg-amber-50/70 border border-amber-200 rounded-2xl p-5 space-y-3">
+                        <h4 class="font-bold text-amber-900 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-bell text-amber-600"></i> 필수 보충 권장 수업
+                        </h4>
+                        <div id="urgentLessonsList" class="space-y-2">
+                            <!-- Dynamic urgent list -->
+                        </div>
+                    </div>
+
+                    <!-- Learning Streak Card -->
+                    <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-indigo-300">공부 습관 형성</span>
+                            <i class="fa-solid fa-fire text-amber-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-2xl font-black">3일 연속 보충 완료!</h4>
+                            <p class="text-xs text-slate-300 mt-1">결석한 날에도 공백 없이 학습을 이어나가고 있어요.</p>
+                        </div>
+                        <div class="w-full bg-white/10 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-amber-400 to-emerald-400 h-2 rounded-full w-[60%]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: TEACHER UPLOAD FORM ==================== -->
+        <section id="viewTeacherUpload" class="hidden space-y-6 max-w-3xl mx-auto">
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+                <div class="border-b border-slate-100 pb-4">
+                    <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-video text-indigo-600"></i> 새 수업 영상 및 보충 자료 등록
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">결석 및 조퇴한 학생 또는 복습이 필요한 학급 전체를 위한 수업 콘텐츠를 업로드합니다.</p>
+                </div>
+
+                <form id="uploadLessonForm" onsubmit="handleUploadLesson(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Subject -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">과목 선택 *</label>
+                            <select id="upSubject" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="국어">국어</option>
+                                <option value="수학">수학</option>
+                                <option value="영어">영어</option>
+                                <option value="사회">사회</option>
+                                <option value="과학">과학</option>
+                                <option value="예체능">예체능</option>
+                            </select>
+                        </div>
+
+                        <!-- Class Date -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">원래 수업 날짜 *</label>
+                            <input type="date" id="upDate" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Unit / Chapter -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">단원명 / 차시 정보 *</label>
+                        <input type="text" id="upUnit" placeholder="예: 3단원. 이차방정식과 그 활용 (12차시)" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <!-- Lesson Title -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">수업 주제 / 동영상 제목 *</label>
+                        <input type="text" id="upTitle" placeholder="예: 근의 공식 완벽 이해 및 개념 적용 예제 풀이" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Tag Category -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">보충 지정 구분 *</label>
+                            <select id="upTag" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="결석보충">🔴 결석 학생 전용 보충</option>
+                                <option value="조퇴보충">🟡 조퇴/결강 보충</option>
+                                <option value="자유복습">🟢 자율 복습용 강의</option>
+                            </select>
+                        </div>
+
+                        <!-- Target Student -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">수강 대상 학생 지정</label>
+                            <select id="upTarget" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="ALL">전체 학생 공개</option>
+                                <option value="SPECIFIC">특정 결석 학생 지정 (김수업, 이하은)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Video Source preset / URL -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">수업 영상 선택 또는 URL *</label>
+                        <select id="upVideoPreset" onchange="applyVideoPreset(this.value)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none mb-2">
+                            <option value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">샘플 강의 영상 1 (개념 설명형)</option>
+                            <option value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4">샘플 강의 영상 2 (실험/시각 자료형)</option>
+                            <option value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">샘플 강의 영상 3 (문제 풀이형)</option>
+                        </select>
+                        <input type="url" id="upVideoUrl" placeholder="https://..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-600">
+                    </div>
+
+                    <!-- Summary Content -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">강의 핵심 요약 (학생 제공용)</label>
+                        <textarea id="upSummary" rows="3" placeholder="1. 주요 개념 설명&#10;2. 주의해야 할 공식&#10;3. 과제 제출 안내" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <!-- Attachment Upload Simulation -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">학습지 / 요약 PDF 첨부파일</label>
+                        <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer">
+                            <i class="fa-solid fa-file-pdf text-rose-500 text-2xl mb-1"></i>
+                            <p class="text-xs text-slate-600 font-semibold">클릭하여 활동지/학습지 PDF 파일을 첨부하세요</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">시뮬레이션을 위해 자동으로 표준 PDF 양식이 세팅됩니다.</p>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-2">
+                        <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md shadow-indigo-100 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> 수업 업로드 및 대상 학생에게 알림 발송
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: TEACHER TRACKING ==================== -->
+        <section id="viewTeacherTracking" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-user-check text-indigo-600"></i> 학생별 보충 학습 이행 현황
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">결석 및 조퇴 사유로 지정된 보충 수업의 시청 여부와 학습 노트를 모니터링합니다.</p>
+                    </div>
+                    <button onclick="sendGlobalReminders()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5 transition-all self-start sm:self-auto">
+                        <i class="fa-solid fa-paper-plane"></i> 미완료 학생 일괄 보충 독려 알림
+                    </button>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[650px]">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200">
+                                <th class="p-3">학번 / 이름</th>
+                                <th class="p-3">지정된 보충 수</th>
+                                <th class="p-3">완료한 수업</th>
+                                <th class="p-3">이행률</th>
+                                <th class="p-3">최근 접속</th>
+                                <th class="p-3 text-center">관리 / 독려</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTrackingTableBody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Dynamic Table Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="font-bold text-slate-700 mb-1">수업온 (ClassON) — 모두를 위한 공평한 교육 기회 보장 플랫폼</p>
+            <p>본 시스템은 결석·조퇴 학생의 학습 결손 방지 및 자율 복습을 위해 수업 영상과 학습 자료를 제공합니다.</p>
+        </div>
+    </footer>
+
+
+    <!-- ==================== CLASSROOM MODAL (수업 강의실) ==================== -->
+    <div id="classroomModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] my-auto">
+            
+            <!-- Modal Header -->
+            <div class="bg-slate-900 text-white px-4 sm:px-6 py-3.5 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <span id="modalSubjectBadge" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white whitespace-nowrap">과목</span>
+                    <div class="truncate">
+                        <h3 id="modalLessonTitle" class="font-bold text-base sm:text-lg truncate">수업 제목</h3>
+                        <p id="modalLessonSubtitle" class="text-xs text-slate-400 truncate">단원 및 날짜 정보</p>
+                    </div>
+                </div>
+                <button onclick="closeLessonModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-sm transition-all ml-2">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Video + Tabs Split) -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+                <!-- Top Section: Video Player Container -->
+                <div class="bg-black rounded-2xl overflow-hidden shadow-lg relative group">
+                    <video id="classroomVideo" class="w-full aspect-video bg-black object-contain" controls>
+                        <source id="classroomVideoSource" src="" type="video/mp4">
+                        브라우저가 비디오 재생을 지원하지 않습니다.
+                    </video>
+
+                    <!-- Player Controller Bar overlay for Custom Speed / Completion -->
+                    <div class="bg-slate-900/95 text-white p-3 flex flex-wrap items-center justify-between gap-3 text-xs border-t border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-400 font-medium">재생 속도:</span>
+                            <button onclick="setVideoSpeed(0.8)" class="speed-btn px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 font-mono">0.8x</button>
+                            <button onclick="setVideoSpeed(1.0)" class="speed-btn px-2 py-1 rounded bg-indigo-600 font-mono">1.0x</button>
+                            <button onclick="setVideoSpeed(1.25)" class="speed-btn px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 font-mono">1.25x</button>
+                            <button onclick="setVideoSpeed(1.5)" class="speed-btn px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 font-mono">1.5x</button>
+                            <button onclick="setVideoSpeed(2.0)" class="speed-btn px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 font-mono">2.0x</button>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <span class="text-slate-300" id="videoProgressText"><i class="fa-solid fa-spinner fa-spin mr-1"></i> 진행률: 0%</span>
+                            <button id="btnToggleComplete" onclick="toggleCurrentLessonComplete()" class="px-3 py-1.5 rounded-lg font-bold transition-all bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-check"></i> 보충 수강 완료 처리
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lower Section: Tabs (Materials, Notes, Q&A) -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5">
+                    <!-- Classroom Inner Navigation Tabs -->
+                    <div class="flex border-b border-slate-200 text-sm font-bold gap-4 mb-4">
+                        <button onclick="switchClassroomTab('materials')" id="classTabBtnMaterials" class="pb-2 text-indigo-600 border-b-2 border-indigo-600 flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-lines"></i> 학습 자료 & 요약본
+                        </button>
+                        <button onclick="switchClassroomTab('notes')" id="classTabBtnNotes" class="pb-2 text-slate-500 hover:text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-pen-to-square"></i> 내 학습 노트 (<span id="modalNoteCount">0</span>)
+                        </button>
+                        <button onclick="switchClassroomTab('qna')" id="classTabBtnQna" class="pb-2 text-slate-500 hover:text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-circle-question fa-solid"></i> 선생님 Q&A (<span id="modalQnaCount">0</span>)
+                        </button>
+                    </div>
+
+                    <!-- Inner Tab 1: Materials & Summary -->
+                    <div id="classTabMaterials" class="space-y-4">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-align-left text-indigo-600"></i> 수업 핵심 요약
+                            </h4>
+                            <div id="modalLessonSummary" class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-700 leading-relaxed whitespace-pre-line font-medium">
+                                요약 내용이 들어갑니다.
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-paperclip text-indigo-600"></i> 첨부 학습 자료 & 활동지
+                            </h4>
+                            <div id="modalMaterialsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <!-- Dynamic materials -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inner Tab 2: Notes -->
+                    <div id="classTabNotes" class="hidden space-y-4">
+                        <!-- Add Note Box -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-700">새 학습 노트 작성</span>
+                                <button onclick="insertCurrentTimeInNote()" class="text-xs px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg font-bold transition-all flex items-center gap-1">
+                                    <i class="fa-solid fa-clock"></i> 현재 재생시간 (<span id="currentTimeBadge">00:00</span>) 타임스탬프 삽입
+                                </button>
+                            </div>
+                            <input type="text" id="noteTitleInput" placeholder="노트 제목 (예: 근의 공식 암기법)" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <textarea id="noteContentInput" rows="2" placeholder="수업을 들으며 기억해야 할 핵심 내용이나 질문거리를 적어두세요." class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                            <button onclick="saveCurrentLessonNote()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all">
+                                노트 저장하기
+                            </button>
+                        </div>
+
+                        <!-- Existing Notes List for this lesson -->
+                        <div id="modalLessonNotesList" class="space-y-2">
+                            <!-- Dynamic notes -->
+                        </div>
+                    </div>
+
+                    <!-- Inner Tab 3: Q&A -->
+                    <div id="classTabQna" class="hidden space-y-4">
+                        <!-- Submit Question Form -->
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                            <h5 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-comment-dots text-indigo-600"></i> 담당 선생님께 질문 작성
+                            </h5>
+                            <textarea id="qnaInput" rows="2" placeholder="수업 중 이해되지 않거나 궁금한 개념을 적어주시면 선생님이 확인 후 답변해 드립니다." class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                            <button onclick="submitQnaQuestion()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1">
+                                <i class="fa-solid fa-paper-plane"></i> 질문 등록하기
+                            </button>
+                        </div>
+
+                        <!-- Q&A List -->
+                        <div id="modalQnaList" class="space-y-3">
+                            <!-- Dynamic Q&As -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // ================= Global Application State =================
+        let currentMode = 'student'; // 'student' | 'teacher'
+        let currentTab = 'student-lessons';
+        let activeLessonId = null;
+
+        // Sample Pre-loaded Lessons Data
+        let lessons = [
+            {
+                id: 'l1',
+                subject: '수학',
+                subjectBg: 'bg-blue-100 text-blue-700 border-blue-200',
+                unit: '3단원. 이차방정식과 그 활용',
+                title: '이차방정식의 근의 공식 도출 및 완벽 개념 이해',
+                date: '2026-10-21',
+                tag: '결석보충',
+                teacher: '김수학 선생님',
+                duration: '22:15',
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                progress: 85,
+                completed: false,
+                materials: [
+                    { name: '3단원_이차방정식_개념요약.pdf', size: '1.2MB' },
+                    { name: '근의공식_실전연습문제.pdf', size: '850KB' }
+                ],
+                summary: '1. 이차방정식 ax² + bx + c = 0 의 근의 공식 수식 도출 과정 설명\n2. 판별식 D = b² - 4ac 의 부호에 따른 실근의 개수 판단법\n3. 예제 풀이: 복리 계산 문제 및 공 던지기 낙하 시간 계산',
+                qna: [
+                    {
+                        id: 1,
+                        author: '김수업',
+                        question: '판별식 D가 0일 때 근이 1개가 되는 이유가 궁금해요!',
+                        date: '10.21 16:30',
+                        answer: '근의 공식 ±√(b²-4ac) 에서 루트 안의 값이 0이 되므로 덧셈과 뺄셈의 결과가 같아져 중근(1개)이 되기 때문이란다!'
+                    }
+                ]
+            },
+            {
+                id: 'l2',
+                subject: '국어',
+                subjectBg: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                unit: '2단원. 문학의 수용과 비평',
+                title: '윤동주 <서시> 시상 전개와 시대적 배경 심화 탐구',
+                date: '2026-10-22',
+                tag: '조퇴보충',
+                teacher: '이국어 선생님',
+                duration: '18:40',
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+                progress: 100,
+                completed: true,
+                materials: [
+                    { name: '윤동주_서시_학습지_해설.pdf', size: '2.1MB' }
+                ],
+                summary: '1. 일제강점기 암울한 시대 상황과 시인의 성찰\n2. 주요 시어의 상징적 의미 ("잎새", "바람", "별")\n3. 부끄러움의 미학 및 의지적 어조 분석',
+                qna: []
+            },
+            {
+                id: 'l3',
+                subject: '영어',
+                subjectBg: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+                unit: 'Lesson 5. Culture & Global Society',
+                title: '관계대명사 What vs 접속사 That 완벽 구별법',
+                date: '2026-10-20',
+                tag: '결석보충',
+                teacher: '박영어 선생님',
+                duration: '20:10',
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+                progress: 0,
+                completed: false,
+                materials: [
+                    { name: 'Lesson5_Grammar_Handout.pdf', size: '1.8MB' }
+                ],
+                summary: '1. 관계대명사 what의 선행사 포함 특징 (~하는 것)\n2. 접속사 that(완전한 문장)과 관계대명사 that(불완전한 문장) 구분 공식\n3. 수능 및 내신 빈출 문법 기출문제 해설',
+                qna: []
+            },
+            {
+                id: 'l4',
+                subject: '과학',
+                subjectBg: 'bg-purple-100 text-purple-700 border-purple-200',
+                unit: '4단원. 화학 반응과 에너지',
+                title: '발열 반응과 흡열 반응 실험 관찰 및 반응열 정리',
+                date: '2026-10-19',
+                tag: '자유복습',
+                teacher: '최과학 선생님',
+                duration: '16:50',
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+                progress: 40,
+                completed: false,
+                materials: [
+                    { name: '화학반응_실험보고서_양식.pdf', size: '950KB' }
+                ],
+                summary: '1. 발열 반응: 반응물의 에너지가 생성물보다 큼 (주위 온도 상승)\n2. 흡열 반응: 주위에서 에너지를 흡수함 (주위 온도 하강)\n3. 실생활 적용 예: 손난로와 냉찜질 팩',
+                qna: []
+            },
+            {
+                id: 'l5',
+                subject: '사회',
+                subjectBg: 'bg-amber-100 text-amber-700 border-amber-200',
+                unit: '1단원. 인권과 헌법',
+                title: '기본권의 종류와 헌법 제37조 제2항 제한의 한계',
+                date: '2026-10-18',
+                tag: '조퇴보충',
+                teacher: '정사회 선생님',
+                duration: '15:30',
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+                progress: 100,
+                completed: true,
+                materials: [
+                    { name: '헌법재판소_판례 요약집.pdf', size: '3.1MB' }
+                ],
+                summary: '1. 자유권, 평등권, 참정권, 청구권, 사회권의 핵심 성격\n2. 기본권 제한의 목적: 국가안전보장, 질서유지, 공공복리\n3. 과잉금지의 원칙',
+                qna: []
+            },
+            {
+                id: 'l6',
+                subject: '예체능',
+                subjectBg: 'bg-rose-100 text-rose-700 border-rose-200',
+                unit: '음악 - 서양 음악사',
+                title: '바로크 양식과 바흐 대위법 음악의 구조적 감상',
+                date: '2026-10-17',
+                tag: '자유복습',
+                teacher: '송음악 선생님',
+                duration: '14:00',
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyplays.mp4',
+                progress: 10,
+                completed: false,
+                materials: [
+                    { name: '바흐_푸가_악보_분석.pdf', size: '1.4MB' }
+                ],
+                summary: '1. 바로크 시대 음악적 특징과 통소주음(Basso Continuo)\n2. 바흐의 G선상의 아리아와 푸가 감상 포인트',
+                qna: []
+            }
+        ];
+
+        // Sample Saved Notes
+        let notes = [
+            {
+                id: 101,
+                lessonId: 'l1',
+                lessonTitle: '이차방정식의 근의 공식 도출 및 완벽 개념 이해',
+                time: '05:12',
+                title: '근의 공식 핵심 수식 암기',
+                content: 'x = (-b ± √(b² - 4ac)) / 2a 공식 필수 암기! 분모 2a 잊지 않기.',
+                date: '2026-10-21 16:10'
+            },
+            {
+                id: 102,
+                lessonId: 'l2',
+                lessonTitle: '윤동주 <서시> 시상 전개와 시대적 배경 심화 탐구',
+                time: '08:40',
+                title: '시어 "별"과 "바람"의 상징성',
+                content: '"별"은 순수한 양심과 이상향, "바람"은 일제 강점기의 시련과 고난을 의미함.',
+                date: '2026-10-22 10:15'
+            }
+        ];
+
+        // Teacher's Tracking Student List
+        let studentsData = [
+            { id: '20101', name: '김수업 (나)', missedCount: 3, completedCount: 2, rate: 67, lastActive: '방금 전' },
+            { id: '20102', name: '박민우', missedCount: 2, completedCount: 2, rate: 100, lastActive: '어제 18:20' },
+            { id: '20103', name: '이하은', missedCount: 4, completedCount: 1, rate: 25, lastActive: '2일 전' },
+            { id: '20104', name: '최현우', missedCount: 1, completedCount: 1, rate: 100, lastActive: '오늘 11:05' },
+            { id: '20105', name: '정서윤', missedCount: 2, completedCount: 0, rate: 0, lastActive: '5일 전' }
+        ];
+
+        // ================= Init & Event Listeners =================
+        window.onload = function() {
+            renderLessonCards();
+            renderDashboard();
+            renderTeacherTracking();
+
+            // Set current date on upload form
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('upDate').value = today;
+
+            // Video player timeupdate logic to track dynamic completion & clock update
+            const video = document.getElementById('classroomVideo');
+            video.ontimeupdate = function() {
+                if (!activeLessonId) return;
+                const currentTime = video.currentTime;
+                const duration = video.duration || 1;
+                const percent = Math.min(100, Math.round((currentTime / duration) * 100));
+
+                const timeBadge = document.getElementById('currentTimeBadge');
+                if (timeBadge) timeBadge.innerText = formatTime(currentTime);
+
+                const progText = document.getElementById('videoProgressText');
+                if (progText) progText.innerHTML = `<i class="fa-solid fa-chart-simple text-indigo-400 mr-1"></i> 진행률: ${percent}%`;
+
+                // Auto update lesson progress in memory
+                const lesson = lessons.find(l => l.id === activeLessonId);
+                if (lesson && percent > lesson.progress) {
+                    lesson.progress = percent;
+                    if (percent >= 90 && !lesson.completed) {
+                        lesson.completed = true;
+                        showToast(`🎉 '${lesson.title}' 보충 학습을 완료했습니다!`, 'success');
+                        confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+                        updateCompleteButtonUI(true);
+                    }
+                }
+            };
+        };
+
+        // Switch between Student and Teacher Mode
+        function switchMode(mode) {
+            currentMode = mode;
+            const btnStud = document.getElementById('btnModeStudent');
+            const btnTeach = document.getElementById('btnModeTeacher');
+            const navStud = document.getElementById('studentNav');
+            const navTeach = document.getElementById('teacherNav');
+            const userName = document.getElementById('userName');
+            const userRole = document.getElementById('userRole');
+            const userAvatar = document.getElementById('userAvatar');
+
+            if (mode === 'student') {
+                btnStud.className = "px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-indigo-600 shadow-sm";
+                btnTeach.className = "px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900";
+                navStud.classList.remove('hidden');
+                navTeach.classList.add('hidden');
+                userName.innerText = "김수업 학생";
+                userRole.innerText = "2학년 1반 01번";
+                userAvatar.innerText = "김";
+                userAvatar.className = "w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center border border-indigo-200";
+                switchTab('student-lessons');
+                showToast("🎓 학생 모드로 전환되었습니다.");
+            } else {
+                btnTeach.className = "px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-indigo-600 shadow-sm";
+                btnStud.className = "px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900";
+                navTeach.classList.remove('hidden');
+                navStud.classList.add('hidden');
+                userName.innerText = "박배움 선생님";
+                userRole.innerText = "2학년 담임 / 교사";
+                userAvatar.innerText = "박";
+                userAvatar.className = "w-9 h-9 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center border border-purple-200";
+                switchTab('teacher-upload');
+                showToast("👨‍🏫 교사 관리자 모드로 전환되었습니다.");
+            }
+        }
+
+        // Switch Navigation Tabs
+        function switchTab(tabId) {
+            currentTab = tabId;
+
+            // Hide all view sections
+            document.getElementById('viewStudentLessons').classList.add('hidden');
+            document.getElementById('viewStudentDashboard').classList.add('hidden');
+            document.getElementById('viewTeacherUpload').classList.add('hidden');
+            document.getElementById('viewTeacherTracking').classList.add('hidden');
+
+            // Reset sub-nav tab styles
+            const studentTabs = ['tabBtnStudentLessons', 'tabBtnStudentDashboard'];
+            const teacherTabs = ['tabBtnTeacherUpload', 'tabBtnTeacherTracking'];
+
+            [...studentTabs, ...teacherTabs].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.className = "py-3 px-1 text-slate-500 hover:text-slate-800 flex items-center gap-2";
+                }
+            });
+
+            if (tabId === 'student-lessons') {
+                document.getElementById('viewStudentLessons').classList.remove('hidden');
+                document.getElementById('tabBtnStudentLessons').className = "py-3 px-1 tab-active flex items-center gap-2";
+                renderLessonCards();
+            } else if (tabId === 'student-dashboard') {
+                document.getElementById('viewStudentDashboard').classList.remove('hidden');
+                document.getElementById('tabBtnStudentDashboard').className = "py-3 px-1 tab-active flex items-center gap-2";
+                renderDashboard();
+            } else if (tabId === 'teacher-upload') {
+                document.getElementById('viewTeacherUpload').classList.remove('hidden');
+                document.getElementById('tabBtnTeacherUpload').className = "py-3 px-1 tab-active flex items-center gap-2";
+            } else if (tabId === 'teacher-tracking') {
+                document.getElementById('viewTeacherTracking').classList.remove('hidden');
+                document.getElementById('tabBtnTeacherTracking').className = "py-3 px-1 tab-active flex items-center gap-2";
+                renderTeacherTracking();
+            }
+        }
+
+        // Render Student Lessons Grid
+        function renderLessonCards() {
+            const grid = document.getElementById('lessonsGrid');
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const filterSubject = document.getElementById('filterSubject').value;
+            const filterTag = document.getElementById('filterTag').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+
+            let filtered = lessons.filter(item => {
+                const matchesSearch = item.title.toLowerCase().includes(search) || 
+                                      item.unit.toLowerCase().includes(search) || 
+                                      item.teacher.toLowerCase().includes(search);
+                const matchesSubject = filterSubject === 'ALL' || item.subject === filterSubject;
+                const matchesTag = filterTag === 'ALL' || item.tag === filterTag;
+                
+                let matchesStatus = true;
+                if (filterStatus === 'PENDING') matchesStatus = !item.completed;
+                if (filterStatus === 'COMPLETED') matchesStatus = item.completed;
+
+                return matchesSearch && matchesSubject && matchesTag && matchesStatus;
+            });
+
+            document.getElementById('lessonCountText').innerText = filtered.length;
+
+            // Update Header Stats
+            const pendingCount = lessons.filter(l => !l.completed).length;
+            const completedCount = lessons.filter(l => l.completed).length;
+            document.getElementById('statPendingBadge').innerText = pendingCount;
+            document.getElementById('statCompletedBadge').innerText = completedCount;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-16 text-center bg-white rounded-2xl border border-dashed border-slate-200">
+                        <i class="fa-regular fa-folder-open text-4xl text-slate-300 mb-3"></i>
+                        <p class="text-slate-600 font-bold">조건에 해당하는 수업이 없습니다.</p>
+                        <p class="text-xs text-slate-400 mt-1">검색어나 필터 조건을 변경해 보세요.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(item => {
+                // Tag styling
+                let tagBadge = '';
+                if (item.tag === '결석보충') {
+                    tagBadge = '<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200"><i class="fa-solid fa-circle text-[8px] mr-1"></i>결석 보충</span>';
+                } else if (item.tag === '조퇴보충') {
+                    tagBadge = '<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 border border-amber-200"><i class="fa-solid fa-circle text-[8px] mr-1"></i>조퇴 보충</span>';
+                } else {
+                    tagBadge = '<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200"><i class="fa-solid fa-circle text-[8px] mr-1"></i>자유 복습</span>';
+                }
+
+                // Completion status badge
+                const statusBadge = item.completed 
+                    ? '<span class="text-xs font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> 이수 완료</span>'
+                    : `<span class="text-xs font-bold text-slate-500">${item.progress}% 시청중</span>`;
+
+                return `
+                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 hover:-translate-y-1 flex flex-col justify-between group">
+                        <div class="p-5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 text-xs font-bold rounded-lg border ${item.subjectBg}">${item.subject}</span>
+                                ${tagBadge}
+                            </div>
+
+                            <div>
+                                <p class="text-xs text-slate-400 font-medium">${item.unit} · ${item.date}</p>
+                                <h3 class="font-bold text-slate-800 text-base mt-1 line-clamp-2 group-hover:text-indigo-600 transition-colors">${item.title}</h3>
+                            </div>
+
+                            <div class="flex items-center gap-2 text-xs text-slate-500 pt-1">
+                                <span><i class="fa-solid fa-chalkboard-user mr-1 text-slate-400"></i>${item.teacher}</span>
+                                <span>•</span>
+                                <span><i class="fa-regular fa-clock mr-1 text-slate-400"></i>${item.duration}</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress & Action Button -->
+                        <div class="bg-slate-50 px-5 py-3 border-t border-slate-100 space-y-2">
+                            <div class="flex items-center justify-between">
+                                ${statusBadge}
+                                <button onclick="openLessonModal('${item.id}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1">
+                                    <i class="fa-solid fa-play text-[10px]"></i> 강의실 입장
+                                </button>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style="width: ${item.progress}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Reset Filters
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterSubject').value = 'ALL';
+            document.getElementById('filterTag').value = 'ALL';
+            document.getElementById('filterStatus').value = 'ALL';
+            renderLessonCards();
+        }
+
+        // Render Student Dashboard
+        function renderDashboard() {
+            const total = lessons.length;
+            const completed = lessons.filter(l => l.completed).length;
+            const pending = lessons.filter(l => !l.completed && (l.tag === '결석보충' || l.tag === '조퇴보충')).length;
+            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('dashTotalCount').innerText = total;
+            document.getElementById('dashCompletedCount').innerText = completed;
+            document.getElementById('dashPendingCount').innerText = pending;
+            document.getElementById('dashRate').innerText = `${rate}%`;
+
+            // Render Notes Collection
+            const notesContainer = document.getElementById('savedNotesContainer');
+            if (notes.length === 0) {
+                notesContainer.innerHTML = `
+                    <div class="p-8 text-center text-slate-400 text-xs border border-dashed border-slate-200 rounded-xl">
+                        저장된 학습 노트가 없습니다. 강의를 시청하며 메모를 남겨보세요!
+                    </div>
+                `;
+            } else {
+                notesContainer.innerHTML = notes.map(n => `
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 hover:bg-white hover:shadow-xs transition-all">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-indigo-600 flex items-center gap-1">
+                                <i class="fa-solid fa-bookmark text-[10px]"></i> ${n.lessonTitle}
+                            </span>
+                            <span class="text-slate-400">${n.date}</span>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 font-mono text-xs font-bold rounded">${n.time}</span>
+                            <h4 class="font-bold text-slate-800 text-sm">${n.title}</h4>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed pl-1 border-l-2 border-indigo-200">${n.content}</p>
+                    </div>
+                `).join('');
+            }
+
+            // Render Urgent Pending Lessons
+            const urgentContainer = document.getElementById('urgentLessonsList');
+            const urgentLessons = lessons.filter(l => !l.completed && (l.tag === '결석보충' || l.tag === '조퇴보충'));
+            
+            if (urgentLessons.length === 0) {
+                urgentContainer.innerHTML = `<p class="text-xs text-amber-700">밀린 결석/조퇴 보충 수업이 모두 완료되었습니다! ✨</p>`;
+            } else {
+                urgentContainer.innerHTML = urgentLessons.map(l => `
+                    <div class="bg-white p-3 rounded-xl border border-amber-200 flex items-center justify-between gap-2 shadow-xs">
+                        <div class="truncate">
+                            <p class="text-xs font-bold text-slate-800 truncate">${l.title}</p>
+                            <p class="text-[11px] text-slate-500">${l.subject} · ${l.date}</p>
+                        </div>
+                        <button onclick="openLessonModal('${l.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg whitespace-nowrap transition-all">
+                            수강하기
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Render Teacher Tracking Table
+        function renderTeacherTracking() {
+            const tbody = document.getElementById('studentTrackingTableBody');
+            tbody.innerHTML = studentsData.map(st => {
+                let badgeClass = 'bg-rose-100 text-rose-700';
+                if (st.rate === 100) badgeClass = 'bg-emerald-100 text-emerald-700';
+                else if (st.rate >= 50) badgeClass = 'bg-amber-100 text-amber-700';
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="p-3 font-bold text-slate-800">${st.name} <span class="text-xs text-slate-400 font-normal">(${st.id})</span></td>
+                        <td class="p-3 text-slate-600">${st.missedCount}개 수업</td>
+                        <td class="p-3 text-slate-600">${st.completedCount}개 완료</td>
+                        <td class="p-3">
+                            <span class="px-2.5 py-1 text-xs font-bold rounded-full ${badgeClass}">${st.rate}% 완료</span>
+                        </td>
+                        <td class="p-3 text-xs text-slate-500">${st.lastActive}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="sendIndividualReminder('${st.name}')" class="px-3 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 rounded-lg text-xs font-bold transition-all border border-slate-200">
+                                <i class="fa-solid fa-bell mr-1"></i> 독려
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Send individual student reminder
+        function sendIndividualReminder(studentName) {
+            showToast(`📩 ${studentName} 학생에게 보충 학습 독려 알람을 전송했습니다.`, 'info');
+        }
+
+        // Send global reminder
+        function sendGlobalReminders() {
+            showToast(`📢 미완료 학생 3명에게 보충 수강 독려 알림이 전송되었습니다!`, 'info');
+        }
+
+        // Open Lesson Modal (Classroom)
+        function openLessonModal(lessonId) {
+            activeLessonId = lessonId;
+            const lesson = lessons.find(l => l.id === lessonId);
+            if (!lesson) return;
+
+            document.getElementById('modalLessonTitle').innerText = lesson.title;
+            document.getElementById('modalLessonSubtitle').innerText = `${lesson.subject} · ${lesson.unit} · ${lesson.teacher} (${lesson.date})`;
+            
+            const badge = document.getElementById('modalSubjectBadge');
+            badge.innerText = lesson.subject;
+
+            // Set Video Source
+            const video = document.getElementById('classroomVideo');
+            const videoSrc = document.getElementById('classroomVideoSource');
+            videoSrc.src = lesson.videoUrl;
+            video.load();
+
+            // Set Summary text
+            document.getElementById('modalLessonSummary').innerText = lesson.summary;
+
+            // Materials
+            const matList = document.getElementById('modalMaterialsList');
+            matList.innerHTML = lesson.materials.map(m => `
+                <div class="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between hover:border-indigo-300 transition-all shadow-xs">
+                    <div class="flex items-center gap-2 truncate">
+                        <i class="fa-solid fa-file-pdf text-rose-500 text-lg"></i>
+                        <div class="truncate">
+                            <p class="text-xs font-bold text-slate-800 truncate">${m.name}</p>
+                            <p class="text-[10px] text-slate-400">${m.size}</p>
+                        </div>
+                    </div>
+                    <button onclick="downloadMaterialSim('${m.name}')" class="px-2.5 py-1 bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 text-xs font-bold rounded-lg transition-all flex items-center gap-1">
+                        <i class="fa-solid fa-download"></i> 받기
+                    </button>
+                </div>
+            `).join('');
+
+            // Update Notes and Q&A counters & content
+            renderModalNotes();
+            renderModalQna();
+
+            // Update completion button UI
+            updateCompleteButtonUI(lesson.completed);
+
+            // Open Modal UI
+            document.getElementById('classroomModal').classList.remove('hidden');
+            switchClassroomTab('materials');
+        }
+
+        // Close Lesson Modal
+        function closeLessonModal() {
+            const video = document.getElementById('classroomVideo');
+            video.pause();
+            document.getElementById('classroomModal').classList.add('hidden');
+            activeLessonId = null;
+            renderLessonCards(); // refresh progress cards
+        }
+
+        // Classroom Inner Tabs Switch
+        function switchClassroomTab(tabName) {
+            document.getElementById('classTabMaterials').classList.add('hidden');
+            document.getElementById('classTabNotes').classList.add('hidden');
+            document.getElementById('classTabQna').classList.add('hidden');
+
+            document.getElementById('classTabBtnMaterials').className = "pb-2 text-slate-500 hover:text-slate-800 flex items-center gap-1.5";
+            document.getElementById('classTabBtnNotes').className = "pb-2 text-slate-500 hover:text-slate-800 flex items-center gap-1.5";
+            document.getElementById('classTabBtnQna').className = "pb-2 text-slate-500 hover:text-slate-800 flex items-center gap-1.5";
+
+            if (tabName === 'materials') {
+                document.getElementById('classTabMaterials').classList.remove('hidden');
+                document.getElementById('classTabBtnMaterials').className = "pb-2 text-indigo-600 border-b-2 border-indigo-600 flex items-center gap-1.5";
+            } else if (tabName === 'notes') {
+                document.getElementById('classTabNotes').classList.remove('hidden');
+                document.getElementById('classTabBtnNotes').className = "pb-2 text-indigo-600 border-b-2 border-indigo-600 flex items-center gap-1.5";
+            } else if (tabName === 'qna') {
+                document.getElementById('classTabQna').classList.remove('hidden');
+                document.getElementById('classTabBtnQna').className = "pb-2 text-indigo-600 border-b-2 border-indigo-600 flex items-center gap-1.5";
+            }
+        }
+
+        // Set Video Speed
+        function setVideoSpeed(speed) {
+            const video = document.getElementById('classroomVideo');
+            video.playbackRate = speed;
+            showToast(`⚡ 재생 속도가 ${speed}x 로 설정되었습니다.`);
+        }
+
+        // Toggle Complete Button UI
+        function updateCompleteButtonUI(isCompleted) {
+            const btn = document.getElementById('btnToggleComplete');
+            if (isCompleted) {
+                btn.className = "px-3 py-1.5 rounded-lg font-bold transition-all bg-emerald-600 text-white flex items-center gap-1.5 shadow-sm";
+                btn.innerHTML = `<i class="fa-solid fa-circle-check"></i> 보충 학습 완료됨`;
+            } else {
+                btn.className = "px-3 py-1.5 rounded-lg font-bold transition-all bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white flex items-center gap-1.5 shadow-sm";
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> 보충 수강 완료 처리`;
+            }
+        }
+
+        // Manual Complete Toggle
+        function toggleCurrentLessonComplete() {
+            if (!activeLessonId) return;
+            const lesson = lessons.find(l => l.id === activeLessonId);
+            if (!lesson) return;
+
+            lesson.completed = !lesson.completed;
+            if (lesson.completed) {
+                lesson.progress = 100;
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                showToast("🎉 보충 수강 완료 처리되었습니다!", "success");
+            } else {
+                showToast("보충 수강 상태가 미완료로 변경되었습니다.");
+            }
+            updateCompleteButtonUI(lesson.completed);
+        }
+
+        // Format Seconds to MM:SS
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
+        }
+
+        // Insert Timestamp in Note Form
+        function insertCurrentTimeInNote() {
+            const video = document.getElementById('classroomVideo');
+            const timeStr = formatTime(video.currentTime);
+            const titleInput = document.getElementById('noteTitleInput');
+            if (!titleInput.value) {
+                titleInput.value = `[${timeStr}] 주요 개념 메모`;
+            } else {
+                titleInput.value = `[${timeStr}] ` + titleInput.value;
+            }
+            showToast(`⏱️ 타임스탬프 (${timeStr}) 가 추가되었습니다.`);
+        }
+
+        // Save Note
+        function saveCurrentLessonNote() {
+            if (!activeLessonId) return;
+            const lesson = lessons.find(l => l.id === activeLessonId);
+            const title = document.getElementById('noteTitleInput').value.trim();
+            const content = document.getElementById('noteContentInput').value.trim();
+            const video = document.getElementById('classroomVideo');
+            const timeStr = formatTime(video.currentTime);
+
+            if (!title || !content) {
+                showToast("⚠️ 노트 제목과 내용을 모두 입력해 주세요.", "warning");
+                return;
+            }
+
+            const newNote = {
+                id: Date.now(),
+                lessonId: activeLessonId,
+                lessonTitle: lesson.title,
+                time: timeStr,
+                title: title,
+                content: content,
+                date: new Date().toISOString().slice(0, 16).replace('T', ' ')
+            };
+
+            notes.unshift(newNote);
+            document.getElementById('noteTitleInput').value = '';
+            document.getElementById('noteContentInput').value = '';
+
+            renderModalNotes();
+            showToast("📝 학습 노트가 성공적으로 저장되었습니다!", "success");
+        }
+
+        // Render Notes in Classroom
+        function renderModalNotes() {
+            const lessonNotes = notes.filter(n => n.lessonId === activeLessonId);
+            document.getElementById('modalNoteCount').innerText = lessonNotes.length;
+
+            const container = document.getElementById('modalLessonNotesList');
+            if (lessonNotes.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 py-3 text-center">이 수업에 작성된 노트가 없습니다.</p>`;
+                return;
+            }
+
+            container.innerHTML = lessonNotes.map(n => `
+                <div class="bg-white p-3 rounded-xl border border-slate-200 text-xs space-y-1">
+                    <div class="flex items-center justify-between font-bold">
+                        <span class="text-slate-800"><span class="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 font-mono rounded mr-1">${n.time}</span> ${n.title}</span>
+                        <span class="text-[10px] text-slate-400">${n.date}</span>
+                    </div>
+                    <p class="text-slate-600 leading-normal pl-1">${n.content}</p>
+                </div>
+            `).join('');
+        }
+
+        // Submit Q&A Question
+        function submitQnaQuestion() {
+            if (!activeLessonId) return;
+            const lesson = lessons.find(l => l.id === activeLessonId);
+            const qnaText = document.getElementById('qnaInput').value.trim();
+
+            if (!qnaText) {
+                showToast("⚠️ 질문 내용을 입력해 주세요.", "warning");
+                return;
+            }
+
+            const newQna = {
+                id: Date.now(),
+                author: '김수업',
+                question: qnaText,
+                date: '방금 전',
+                answer: null
+            };
+
+            lesson.qna.unshift(newQna);
+            document.getElementById('qnaInput').value = '';
+            renderModalQna();
+            showToast("❓ 선생님께 질문이 등록되었습니다. 답변 시 알림이 발송됩니다!");
+
+            // Simulate teacher response after 2 sec
+            setTimeout(() => {
+                newQna.answer = "좋은 질문이네요! 해당 개념은 다음 차시 영상의 03분 15초 부분의 설명과 함께 비교하면 훨씬 쉽게 이해할 수 있습니다.";
+                renderModalQna();
+            }, 3000);
+        }
+
+        // Render Q&A in Classroom
+        function renderModalQna() {
+            const lesson = lessons.find(l => l.id === activeLessonId);
+            if (!lesson) return;
+
+            document.getElementById('modalQnaCount').innerText = lesson.qna.length;
+            const container = document.getElementById('modalQnaList');
+
+            if (lesson.qna.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 py-3 text-center">아직 등록된 질문이 없습니다. 궁금한 점을 적어보세요!</p>`;
+                return;
+            }
+
+            container.innerHTML = lesson.qna.map(q => `
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 text-xs space-y-2">
+                    <div class="flex items-center justify-between font-bold text-slate-700">
+                        <span><i class="fa-solid fa-circle-question text-indigo-500 mr-1"></i> ${q.author} 학생의 질문</span>
+                        <span class="text-[10px] text-slate-400">${q.date}</span>
+                    </div>
+                    <p class="text-slate-800 font-medium pl-2 border-l-2 border-indigo-500">${q.question}</p>
+
+                    ${q.answer ? `
+                        <div class="bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100 text-slate-700 mt-2 space-y-1">
+                            <p class="font-bold text-indigo-700 flex items-center gap-1 text-[11px]">
+                                <i class="fa-solid fa-reply"></i> ${lesson.teacher}의 답변
+                            </p>
+                            <p class="text-slate-600 leading-relaxed">${q.answer}</p>
+                        </div>
+                    ` : `
+                        <div class="text-[11px] text-amber-600 font-semibold flex items-center gap-1 pt-1">
+                            <i class="fa-solid fa-clock"></i> 선생님이 답변을 작성 중입니다...
+                        </div>
+                    `}
+                </div>
+            `).join('');
+        }
+
+        // Preset video handler in teacher form
+        function applyVideoPreset(val) {
+            document.getElementById('upVideoUrl').value = val;
+        }
+
+        // Teacher: Upload New Lesson
+        function handleUploadLesson(e) {
+            e.preventDefault();
+            const subject = document.getElementById('upSubject').value;
+            const date = document.getElementById('upDate').value;
+            const unit = document.getElementById('upUnit').value;
+            const title = document.getElementById('upTitle').value;
+            const tag = document.getElementById('upTag').value;
+            const videoUrl = document.getElementById('upVideoUrl').value || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+            const summary = document.getElementById('upSummary').value || '선생님이 등록한 핵심 수업 요약본입니다.';
+
+            let bgClass = 'bg-blue-100 text-blue-700 border-blue-200';
+            if (subject === '국어') bgClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            if (subject === '영어') bgClass = 'bg-indigo-100 text-indigo-700 border-indigo-200';
+            if (subject === '과학') bgClass = 'bg-purple-100 text-purple-700 border-purple-200';
+            if (subject === '사회') bgClass = 'bg-amber-100 text-amber-700 border-amber-200';
+
+            const newLesson = {
+                id: 'l' + (lessons.length + 1),
+                subject: subject,
+                subjectBg: bgClass,
+                unit: unit,
+                title: title,
+                date: date,
+                tag: tag,
+                teacher: '박배움 선생님',
+                duration: '18:00',
+                videoUrl: videoUrl,
+                progress: 0,
+                completed: false,
+                materials: [
+                    { name: `${unit}_수업자료.pdf`, size: '1.5MB' }
+                ],
+                summary: summary,
+                qna: []
+            };
+
+            lessons.unshift(newLesson);
+
+            // Reset form
+            document.getElementById('uploadLessonForm').reset();
+            showToast("✅ 새 보충 수업이 등록되었으며, 대상 학생에게 알림이 전송되었습니다!", "success");
+
+            // Switch to lessons view
+            switchMode('student');
+        }
+
+        // Material Download Simulation
+        function downloadMaterialSim(fileName) {
+            showToast(`📥 '${fileName}' 파일 다운로드가 시작되었습니다.`);
+        }
+
+        // Export Notes as Text File
+        function exportNotesTxt() {
+            if (notes.length === 0) {
+                showToast("저장된 노트가 없습니다.", "warning");
+                return;
+            }
+            let text = "=== 수업온 (ClassON) 나의 학습 노트 ===\n\n";
+            notes.forEach(n => {
+                text += `[${n.date}] ${n.lessonTitle}\n`;
+                text += `시간: ${n.time} | 제목: ${n.title}\n`;
+                text += `내용: ${n.content}\n`;
+                text += "----------------------------------------\n";
+            });
+
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', 'ClassON_My_Notes.txt');
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            showToast("📄 학습 노트가 텍스트 파일로 저장되었습니다.");
+        }
+
+        // Custom Toast System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let borderClass = 'border-indigo-500 bg-slate-900 text-white';
+            if (type === 'success') borderClass = 'border-emerald-500 bg-slate-900 text-white';
+            if (type === 'warning') borderClass = 'border-amber-500 bg-slate-900 text-white';
+
+            toast.className = `p-3.5 rounded-xl shadow-xl border-l-4 ${borderClass} text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>

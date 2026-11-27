@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>줍go - 친환경 에코 캐시</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* 🔥 상자 개봉 두근두근 흔들림 & 팡 터짐 애니메이션 */
+        @keyframes chestShake {
+            0% { transform: rotate(0deg) scale(1); }
+            15% { transform: rotate(-10deg) scale(1.1); }
+            30% { transform: rotate(10deg) scale(1.1); }
+            45% { transform: rotate(-10deg) scale(1.15); }
+            60% { transform: rotate(10deg) scale(1.15); }
+            75% { transform: rotate(-5deg) scale(1.2); }
+            90% { transform: rotate(5deg) scale(1.2); }
+            100% { transform: rotate(0deg) scale(1.25); }
+        }
+        .animate-chest-shake { animation: chestShake 0.8s ease-in-out infinite; }
+
+        @keyframes burstPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-burst { animation: burstPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans flex justify-center items-center p-0 md:p-4">
+
+    <!-- Mobile App Frame Container -->
+    <div id="app" class="w-full max-w-md bg-white min-h-screen md:min-h-[840px] md:max-h-[900px] md:rounded-3xl shadow-2xl flex flex-col relative overflow-hidden">
+        
+        <!-- ========================================== -->
+        <!-- 1. LOGIN & NICKNAME MODAL SCREEN           -->
+        <!-- ========================================== -->
+        <div id="loginModal" class="absolute inset-0 bg-emerald-600 z-50 flex flex-col justify-center items-center p-6 text-white transition-opacity duration-300">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
+                    <i class="fa-solid fa-leaf text-4xl text-emerald-100"></i>
+                </div>
+                <h1 class="text-3xl font-extrabold tracking-tight">줍go 🍃</h1>
+                <p class="text-emerald-100 text-sm mt-2">지구를 구하고 캐시를 줍는 리사이클 앱</p>
+            </div>
+
+            <div class="w-full bg-white text-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                <h2 class="text-lg font-bold text-center text-slate-800 mb-2">시작하기</h2>
+                
+                <!-- Nickname Input Field -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">사용할 닉네임</label>
+                    <input type="text" id="inputNickname" placeholder="닉네임을 입력하세요" 
+                           class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-medium">
+                </div>
+
+                <!-- Submit Button -->
+                <button id="btnStart" type="button" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md transition active:scale-95">
+                    앱 시작하기 🚀
+                </button>
+
+                <div class="relative my-4 flex items-center justify-center">
+                    <div class="border-t border-slate-200 w-full"></div>
+                    <span class="bg-white px-3 text-xs text-slate-400 absolute">또는</span>
+                </div>
+
+                <!-- Google Login Button -->
+                <button id="btnGoogleLogin" type="button" class="w-full py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl flex items-center justify-center gap-2 text-sm shadow-sm transition">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    구글 계정으로 로그인
+                </button>
+
+                <!-- Guest Login Option -->
+                <button id="btnGuestLogin" type="button" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-xl text-xs transition">
+                    익명/게스트로 시작하기
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- 2. MAIN APP HEADER                         -->
+        <!-- ========================================== -->
+        <header class="bg-emerald-600 text-white p-4 flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-recycle text-xl"></i>
+                <span class="font-black text-lg tracking-wide">줍go</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-700/60 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                    <i class="fa-solid fa-coins text-amber-300"></i>
+                    <span id="headerCoins">0</span>
+                </div>
+                <div class="bg-emerald-700/60 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                    <i class="fa-solid fa-star text-amber-300"></i>
+                    <span id="headerPoints">0 P</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========================================== -->
+        <!-- 3. MAIN CONTENT BODY                       -->
+        <!-- ========================================== -->
+        <main class="flex-1 overflow-y-auto bg-slate-50 relative">
+            
+            <!-- TAB 1: CERTIFICATION / CAMERA HOME -->
+            <section id="tabAuth" class="p-4 space-y-4">
+                <!-- User Welcome Banner -->
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="text-xs text-emerald-100">오늘도 지구를 깨끗하게!</p>
+                        <h3 class="text-lg font-bold"><span id="userWelcomeName">환경보호가</span> 님 환영합니다!</h3>
+                        <div class="mt-1 flex items-center gap-1.5 text-[11px] bg-white/20 px-2.5 py-1 rounded-full w-fit">
+                            <i class="fa-solid fa-calendar-check text-amber-300"></i>
+                            <span>7일 출석 스택: <strong id="streakCount">1</strong>일차 (7일차 달성 시 💎다이아 상자 5개!)</span>
+                        </div>
+                    </div>
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-user text-white"></i>
+                    </div>
+                </div>
+
+                <!-- Instant Camera Capture Box -->
+                <div class="bg-white border-2 border-dashed border-emerald-300 rounded-2xl p-6 text-center shadow-sm">
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+                    
+                    <div id="cameraPreview" class="hidden mb-4">
+                        <img id="previewImg" src="" class="w-full h-48 object-cover rounded-xl shadow-md">
+                    </div>
+
+                    <div id="cameraPrompt" class="py-4">
+                        <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fa-solid fa-camera text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-800 mb-1">쓰레기 버리기 / 분리수거 인증</h4>
+                        <p class="text-xs text-slate-500 mb-4">인증 완수 시 <strong class="text-emerald-600 font-bold">보통 상자 10개</strong>를 받습니다!</p>
+                    </div>
+
+                    <button id="btnTriggerCamera" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-sm transition active:scale-95">
+                        <i class="fa-solid fa-camera-retro"></i>
+                        사진 찍어 인증하고 상자 10개 받기
+                    </button>
+                </div>
+
+                <!-- AI Recognition Result Alert -->
+                <div id="aiResultBox" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs space-y-1">
+                    <div class="font-bold text-emerald-800 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check"></i> 분리수거/쓰레기 인증 완수!
+                    </div>
+                    <p class="text-emerald-700" id="aiResultText">올바른 분리수거가 확인되었습니다! (보통 상자 10개 지급 완료 🎉)</p>
+                </div>
+
+                <!-- Test Data Ingestion Section -->
+                <div class="pt-6 border-t border-slate-200 text-center">
+                    <button id="btnInjectTestData" class="text-xs text-slate-400 underline hover:text-slate-600 font-medium">
+                        🎁 테스트용 상자(보통 10개 / 다이아 5개) 받기
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB 2: BOX REWARDS -->
+            <section id="tabBoxes" class="p-4 space-y-4 hidden">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-md">보상 상자 보관함</h3>
+                    <span class="text-xs text-slate-400 font-medium">버튼 클릭 시 한번에 연속 개봉!</span>
+                </div>
+                
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- Normal Box Card (10 Continuous Opening) -->
+                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-2xl border border-amber-200 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <!-- Styled CSS Normal Chest Graphic -->
+                            <div class="w-16 h-16 bg-gradient-to-b from-amber-500 via-amber-600 to-amber-800 rounded-2xl flex flex-col items-center justify-center relative shadow-lg shadow-amber-600/30 border-2 border-amber-300 shrink-0">
+                                <div class="w-full h-2.5 bg-amber-400/70 absolute top-2 border-y border-amber-800/60"></div>
+                                <i class="fa-solid fa-box-archive text-amber-100 text-2xl z-10 drop-shadow-md"></i>
+                                <div class="w-3.5 h-3.5 bg-amber-200 rounded-full border border-amber-900 z-10 flex items-center justify-center -mt-0.5 shadow-sm">
+                                    <div class="w-1.5 h-1.5 bg-amber-800 rounded-full"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-amber-900">보통 상자 세트 (10개)</h4>
+                                <p class="text-[11px] text-amber-700/80">상자당 5~7 코인 (5개:60%, 6개:30%, 7개:10%)</p>
+                                <p class="text-xs text-slate-600 font-semibold mt-1">보유: <span id="cntNormalBox" class="font-black text-amber-600 text-sm">0</span>개</p>
+                            </div>
+                        </div>
+                        
+                        <button id="btnOpenNormalBox" class="px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs rounded-xl transition shadow-md active:scale-95 whitespace-nowrap">
+                            📦 10개 연속 개봉
+                        </button>
+                    </div>
+
+                    <!-- Diamond Box Card (5 Continuous Opening) -->
+                    <div class="bg-gradient-to-r from-cyan-50 to-blue-50 p-4 rounded-2xl border border-cyan-200 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <!-- Styled CSS Diamond Chest Graphic -->
+                            <div class="w-16 h-16 bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 rounded-2xl flex flex-col items-center justify-center relative shadow-lg shadow-cyan-500/40 border-2 border-cyan-200 shrink-0 overflow-hidden">
+                                <div class="w-full h-2.5 bg-cyan-300/50 absolute top-2 border-y border-cyan-800/60"></div>
+                                <i class="fa-solid fa-gem text-cyan-100 text-2xl z-10 drop-shadow-lg"></i>
+                                <div class="w-3.5 h-3.5 bg-cyan-200 rounded-full border border-cyan-800 z-10 flex items-center justify-center -mt-0.5 shadow-sm">
+                                    <div class="w-1.5 h-1.5 bg-cyan-900 rounded-full"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-cyan-900">다이아 상자 세트 (5개)</h4>
+                                <p class="text-[11px] text-cyan-700/80">상자당 7~10 코인 (7개:50%, 8개:20%, 9개:15%, 10개:15%)</p>
+                                <p class="text-xs text-slate-600 font-semibold mt-1">보유: <span id="cntDiamondBox" class="font-black text-cyan-600 text-sm">0</span>개</p>
+                            </div>
+                        </div>
+                        
+                        <button id="btnOpenDiamondBox" class="px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-bold text-xs rounded-xl transition shadow-md active:scale-95 whitespace-nowrap">
+                            💎 5개 연속 개봉
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: RANKING -->
+            <section id="tabRanking" class="p-4 space-y-4 hidden">
+                <!-- User Ranking Banner -->
+                <div class="bg-slate-800 text-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
+                    <div>
+                        <span class="text-xs text-slate-400">내 실시간 순위</span>
+                        <h4 class="font-bold text-md text-emerald-400" id="myRankDisplay">내 닉네임: 불러오는 중...</h4>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400">내 코인</span>
+                        <div class="font-black text-amber-400 text-sm" id="myRankCoins">0 C</div>
+                    </div>
+                </div>
+
+                <!-- Ranking List Container -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-3 bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-500 flex justify-between">
+                        <span>순위 및 닉네임</span>
+                        <span>획득 코인</span>
+                    </div>
+                    <div id="rankingList" class="divide-y divide-slate-100">
+                        <!-- Real User Rankings populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ========================================== -->
+        <!-- 4. BOTTOM NAVIGATION BAR                   -->
+        <!-- ========================================== -->
+        <nav class="bg-white border-t border-slate-200 flex justify-around p-2 text-slate-500 text-xs">
+            <button id="navTabAuth" class="flex-1 py-2 flex flex-col items-center gap-1 text-emerald-600 font-bold">
+                <i class="fa-solid fa-camera text-base"></i>
+                <span>인증하기</span>
+            </button>
+            <button id="navTabBoxes" class="flex-1 py-2 flex flex-col items-center gap-1 hover:text-emerald-600 transition">
+                <i class="fa-solid fa-box-open text-base"></i>
+                <span>상자</span>
+            </button>
+            <button id="navTabRanking" class="flex-1 py-2 flex flex-col items-center gap-1 hover:text-emerald-600 transition">
+                <i class="fa-solid fa-trophy text-base"></i>
+                <span>랭킹</span>
+            </button>
+        </nav>
+
+        <!-- Toast Notification Container -->
+        <div id="toast" class="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900/90 text-white text-xs px-4 py-2.5 rounded-full shadow-lg pointer-events-none opacity-0 transition-opacity duration-300 z-50 text-center whitespace-nowrap">
+            알림 메시지
+        </div>
+
+        <!-- Box Reward Visual Modal -->
+        <div id="boxRewardModal" class="hidden absolute inset-0 bg-slate-900/85 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
+            <div class="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl space-y-4 relative overflow-hidden animate-pop">
+                <!-- Background Glow Effect for Opening -->
+                <div id="bgGlow" class="absolute inset-0 bg-amber-400/10 pointer-events-none opacity-0 transition-opacity duration-500"></div>
+
+                <div class="py-2 relative z-10">
+                    <!-- Shakeable Box Graphic Container -->
+                    <div id="boxIconContainer" class="w-24 h-24 mx-auto mb-3 flex items-center justify-center transition-all duration-300">
+                        <div id="boxIcon" class="text-6xl cursor-pointer select-none">📦</div>
+                    </div>
+
+                    <!-- Status Text ("두근두근..." -> "🎉 개봉 완료!") -->
+                    <p id="boxStatusText" class="text-xs font-bold text-amber-600 mb-1">두근두근... 상자를 여는 중!</p>
+                    <h3 id="boxRewardTitle" class="text-lg font-black text-slate-800">상자 개봉 중...</h3>
+                    
+                    <!-- Continuous Breakdown List -->
+                    <div id="boxBreakdown" class="hidden my-3 max-h-36 overflow-y-auto bg-slate-50 p-2 rounded-xl border border-slate-100 text-xs grid grid-cols-2 gap-1.5 text-slate-600 font-medium animate-burst">
+                    </div>
+
+                    <div id="boxRewardAmount" class="text-2xl font-black text-amber-500 mt-2 hidden animate-burst">
+                        총 +0 코인
+                    </div>
+                </div>
+                
+                <div id="boxModalButtons" class="space-y-2 hidden relative z-10">
+                    <!-- 2x Reward Ad Button -->
+                    <button id="btnWatchAdDouble" class="w-full py-3 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-white font-bold rounded-xl shadow-md text-xs transition active:scale-95 flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-play-circle text-sm"></i>
+                        <span>🎬 광고 보고 2배 받기 (<span id="txtDoubleCoins">+0</span> 코인)</span>
+                    </button>
+                    <!-- Claim Normal -->
+                    <button id="btnCloseBoxModal" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-xs transition">
+                        확인 (그냥 받기)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulated Ad Modal Container (for Google AdSense / Video Ad Integration) -->
+        <div id="adModal" class="hidden absolute inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-6 text-white text-center">
+            <div class="w-full max-w-xs bg-slate-800 p-6 rounded-3xl border border-slate-700 space-y-4">
+                <div class="text-xs bg-amber-500/20 text-amber-300 py-1 px-3 rounded-full w-fit mx-auto">
+                    📢 스폰서 광고 시청 중
+                </div>
+                
+                <div class="w-full h-40 bg-slate-900 rounded-2xl flex flex-col items-center justify-center border border-dashed border-slate-600 p-4">
+                    <i class="fa-solid fa-rectangle-ad text-4xl text-amber-400 mb-2"></i>
+                    <p class="text-xs text-slate-400">광고 재생 영역</p>
+                    <p class="text-[10px] text-slate-500 mt-1">(광고주 유치 및 2배 보상 시스템)</p>
+                </div>
+
+                <div class="text-xs text-slate-300">
+                    <span id="adCountdown" class="font-bold text-amber-400 text-sm">3</span>초 후 보상이 지급됩니다...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 5. FIREBASE KEY CONFIGURATION SLOT         -->
+    <!-- 🔑 약 196번째 줄: 파이어베이스 키 붙여넣는 곳 -->
+    <!-- ========================================== -->
+    <script>
+        // 파이어베이스 콘솔에서 복사한 const firebaseConfig = { ... }; 코드 전체를 
+        // 아래 var myCustomFirebaseConfig = { ... }; 자리에 그대로 붙여넣으세요.
+        var myCustomFirebaseConfig = {
+          apiKey: "AIzaSyAErxc5OLq84WwzPvgMOXhYOPx4fe7DGwA",
+  authDomain: "pick-6ecc7.firebaseapp.com",
+  projectId: "pick-6ecc7",
+  storageBucket: "pick-6ecc7.firebasestorage.app",
+  messagingSenderId: "696213235886",
+  appId: "1:696213235886:web:d7b105969743ab341b653f",
+  measurementId: "G-9NBM3H9JBN"
+        };
+    </script>
+
+    <!-- ========================================== -->
+    <!-- 6. APPLICATION LOGIC & FIREBASE SDK        -->
+    <!-- ========================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Application State
+        let state = {
+            nickname: localStorage.getItem('jubgo_nickname') || '',
+            coins: parseInt(localStorage.getItem('jubgo_coins')) || 0,
+            points: parseInt(localStorage.getItem('jubgo_points')) || 0,
+            normalBoxes: parseInt(localStorage.getItem('jubgo_normalBoxes')) || 0,
+            diamondBoxes: parseInt(localStorage.getItem('jubgo_diamondBoxes')) || 0,
+            streakDays: parseInt(localStorage.getItem('jubgo_streakDays')) || 1
+        };
+
+        let lastEarnedCoins = 0;
+        let isFirebaseActive = false;
+        let app = null, auth = null, db = null;
+
+        // Safely Initialize Firebase if key exists
+        const conf = window.myCustomFirebaseConfig || window.firebaseConfig;
+        if (conf && conf.apiKey && conf.apiKey !== "여기에_키를_붙여넣으세요") {
+            try {
+                app = initializeApp(conf);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                isFirebaseActive = true;
+            } catch (err) {
+                console.warn("Firebase initialize warning:", err);
+            }
+        }
+
+        // DOM Elements
+        const loginModal = document.getElementById('loginModal');
+        const inputNickname = document.getElementById('inputNickname');
+        const btnStart = document.getElementById('btnStart');
+        const btnGoogleLogin = document.getElementById('btnGoogleLogin');
+        const btnGuestLogin = document.getElementById('btnGuestLogin');
+
+        const headerCoins = document.getElementById('headerCoins');
+        const headerPoints = document.getElementById('headerPoints');
+        const userWelcomeName = document.getElementById('userWelcomeName');
+        const streakCount = document.getElementById('streakCount');
+
+        const cameraInput = document.getElementById('cameraInput');
+        const btnTriggerCamera = document.getElementById('btnTriggerCamera');
+        const cameraPreview = document.getElementById('cameraPreview');
+        const previewImg = document.getElementById('previewImg');
+        const aiResultBox = document.getElementById('aiResultBox');
+
+        const cntNormalBox = document.getElementById('cntNormalBox');
+        const btnOpenNormalBox = document.getElementById('btnOpenNormalBox');
+        const cntDiamondBox = document.getElementById('cntDiamondBox');
+        const btnOpenDiamondBox = document.getElementById('btnOpenDiamondBox');
+
+        const myRankDisplay = document.getElementById('myRankDisplay');
+        const myRankCoins = document.getElementById('myRankCoins');
+        const rankingList = document.getElementById('rankingList');
+
+        const navTabAuth = document.getElementById('navTabAuth');
+        const navTabBoxes = document.getElementById('navTabBoxes');
+        const navTabRanking = document.getElementById('navTabRanking');
+        const tabAuth = document.getElementById('tabAuth');
+        const tabBoxes = document.getElementById('tabBoxes');
+        const tabRanking = document.getElementById('tabRanking');
+
+        const toast = document.getElementById('toast');
+        const boxRewardModal = document.getElementById('boxRewardModal');
+        const boxIcon = document.getElementById('boxIcon');
+        const boxRewardTitle = document.getElementById('boxRewardTitle');
+        const boxBreakdown = document.getElementById('boxBreakdown');
+        const boxRewardAmount = document.getElementById('boxRewardAmount');
+        const boxModalButtons = document.getElementById('boxModalButtons');
+        const btnWatchAdDouble = document.getElementById('btnWatchAdDouble');
+        const txtDoubleCoins = document.getElementById('txtDoubleCoins');
+        const btnCloseBoxModal = document.getElementById('btnCloseBoxModal');
+
+        const adModal = document.getElementById('adModal');
+        const adCountdown = document.getElementById('adCountdown');
+        const btnInjectTestData = document.getElementById('btnInjectTestData');
+
+        // Toast Helper
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2500);
+        }
+
+        // Save State & Sync
+        function saveState() {
+            localStorage.setItem('jubgo_nickname', state.nickname);
+            localStorage.setItem('jubgo_coins', state.coins.toString());
+            localStorage.setItem('jubgo_points', state.points.toString());
+            localStorage.setItem('jubgo_normalBoxes', state.normalBoxes.toString());
+            localStorage.setItem('jubgo_diamondBoxes', state.diamondBoxes.toString());
+            localStorage.setItem('jubgo_streakDays', state.streakDays.toString());
+
+            updateUI();
+
+            if (isFirebaseActive && db && state.nickname) {
+                setDoc(doc(db, "rankings", state.nickname), {
+                    nickname: state.nickname,
+                    coins: state.coins,
+                    points: state.points,
+                    updatedAt: new Date().toISOString()
+                }, { merge: true }).catch(err => console.error("Firestore Save Error:", err));
+            }
+        }
+
+        // Update UI Text & Counters
+        function updateUI() {
+            headerCoins.textContent = (state.coins || 0).toLocaleString();
+            headerPoints.textContent = (state.points || 0).toLocaleString() + ' P';
+            userWelcomeName.textContent = state.nickname || '환경보호가';
+            cntNormalBox.textContent = state.normalBoxes || 0;
+            cntDiamondBox.textContent = state.diamondBoxes || 0;
+            streakCount.textContent = state.streakDays || 1;
+
+            myRankDisplay.textContent = state.nickname ? `내 닉네임: ${state.nickname}` : '닉네임 미설정';
+            myRankCoins.textContent = (state.coins || 0).toLocaleString() + ' C';
+        }
+
+        // Probability Calculations
+        function getRandomNormalBoxCoin() {
+            const rand = Math.random();
+            if (rand < 0.60) return 5;       // 60% -> 5 coins
+            if (rand < 0.90) return 6;       // 30% -> 6 coins
+            return 7;                        // 10% -> 7 coins
+        }
+
+        function getRandomDiamondBoxCoin() {
+            const rand = Math.random();
+            if (rand < 0.50) return 7;       // 50% -> 7 coins
+            if (rand < 0.70) return 8;       // 20% -> 8 coins
+            if (rand < 0.85) return 9;       // 15% -> 9 coins
+            return 10;                       // 15% -> 10 coins
+        }
+
+        // Continuous Unboxing (Normal 10 boxes / Diamond 5 boxes)
+        function openContinuousBoxes(type) {
+            const isNormal = type === 'normal';
+            const reqCount = isNormal ? 10 : 5;
+            const currentAvail = isNormal ? state.normalBoxes : state.diamondBoxes;
+
+            if (currentAvail < reqCount) {
+                showToast(`${isNormal ? '보통' : '다이아'} 상자가 최소 ${reqCount}개 필요합니다!`);
+                return;
+            }
+
+            // Deduct Boxes
+            if (isNormal) {
+                state.normalBoxes -= reqCount;
+            } else {
+                state.diamondBoxes -= reqCount;
+            }
+
+            let drops = [];
+            let totalCoins = 0;
+
+            for (let i = 0; i < reqCount; i++) {
+                const coinVal = isNormal ? getRandomNormalBoxCoin() : getRandomDiamondBoxCoin();
+                drops.push(coinVal);
+                totalCoins += coinVal;
+            }
+
+            lastEarnedCoins = totalCoins;
+
+            const bgGlow = document.getElementById('bgGlow');
+            const boxStatusText = document.getElementById('boxStatusText');
+            const boxIconContainer = document.getElementById('boxIconContainer');
+
+            // Set Initial Chest Graphic inside Modal
+            if (isNormal) {
+                boxIcon.innerHTML = `<div class="w-20 h-20 bg-gradient-to-b from-amber-500 via-amber-600 to-amber-800 rounded-2xl flex flex-col items-center justify-center border-2 border-amber-300 shadow-xl shadow-amber-600/40 relative"><div class="w-full h-3 bg-amber-400/70 absolute top-2.5 border-y border-amber-800/60"></div><i class="fa-solid fa-box-archive text-amber-100 text-4xl z-10 drop-shadow-md"></i><div class="w-4 h-4 bg-amber-200 rounded-full border border-amber-900 z-10 flex items-center justify-center -mt-1 shadow-sm"><div class="w-2 h-2 bg-amber-800 rounded-full"></div></div></div>`;
+            } else {
+                boxIcon.innerHTML = `<div class="w-20 h-20 bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 rounded-2xl flex flex-col items-center justify-center border-2 border-cyan-200 shadow-xl shadow-cyan-500/40 relative"><div class="w-full h-3 bg-cyan-300/50 absolute top-2.5 border-y border-cyan-800/60"></div><i class="fa-solid fa-gem text-cyan-100 text-4xl z-10 drop-shadow-lg"></i><div class="w-4 h-4 bg-cyan-200 rounded-full border border-cyan-800 z-10 flex items-center justify-center -mt-1 shadow-sm"><div class="w-2 h-2 bg-cyan-900 rounded-full"></div></div></div>`;
+            }
+
+            if (bgGlow) bgGlow.style.opacity = '0.5';
+            boxBreakdown.innerHTML = '';
+            boxBreakdown.classList.remove('hidden');
+            boxRewardAmount.textContent = '총 +0 코인';
+            boxRewardAmount.classList.remove('hidden');
+            boxModalButtons.classList.add('hidden');
+            boxRewardModal.classList.remove('hidden');
+
+            let step = 0;
+            let runningSum = 0;
+
+            boxStatusText.textContent = `⚡ 연속 개봉 중... (0 / ${reqCount})`;
+            boxStatusText.className = "text-xs font-bold text-amber-600 mb-1 animate-pulse";
+            boxRewardTitle.textContent = `${isNormal ? '보통' : '다이아'} 상자 연속 개봉!`;
+
+            // ⚡ 0.35초(약 0.4초)마다 상자가 팡! 흔들리며 +5, +6, +7 코인이 연쇄 팝업되는 모션
+            const interval = setInterval(() => {
+                if (step < reqCount) {
+                    const coinVal = drops[step];
+                    runningSum += coinVal;
+
+                    // 상자 임팩트 애니메이션 리셋 및 재실행
+                    boxIconContainer.classList.remove('animate-chest-shake', 'animate-burst');
+                    void boxIconContainer.offsetWidth; // Reflow
+                    boxIconContainer.classList.add('animate-burst');
+
+                    // 개별 결과 항목 팝업
+                    const itemEl = document.createElement('div');
+                    itemEl.className = "bg-white p-1.5 rounded-lg border border-amber-100 shadow-sm flex justify-between items-center animate-pop";
+                    itemEl.innerHTML = `<span class="text-slate-500 font-medium">#${step + 1} 상자:</span> 
+                        <strong class="text-amber-600 font-black text-sm flex items-center gap-1"><i class="fa-solid fa-coins text-amber-400"></i>+${coinVal} 코인</strong>`;
+                    boxBreakdown.appendChild(itemEl);
+                    boxBreakdown.scrollTop = boxBreakdown.scrollHeight;
+
+                    // 실시간 총 코인 스코어 상승
+                    boxRewardAmount.textContent = `총 +${runningSum} 코인`;
+                    boxStatusText.textContent = `⚡ 연속 개봉 중... (${step + 1} / ${reqCount})`;
+
+                    step++;
+                } else {
+                    clearInterval(interval);
+
+                    boxIconContainer.className = "w-24 h-24 mx-auto mb-3 flex items-center justify-center animate-burst scale-110";
+                    boxStatusText.textContent = "🎉 연속 개봉 완료!";
+                    boxStatusText.className = "text-xs font-bold text-emerald-600 mb-1";
+                    if (bgGlow) bgGlow.style.opacity = '1';
+
+                    txtDoubleCoins.textContent = `+${totalCoins * 2}`;
+                    boxModalButtons.classList.remove('hidden');
+
+                    state.coins += totalCoins;
+                    saveState();
+                }
+            }, 350);
+        }
+
+        // Photo Certification Action
+        btnTriggerCamera.addEventListener('click', () => cameraInput.click());
+
+        cameraInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    previewImg.src = evt.target.result;
+                    cameraPreview.classList.remove('hidden');
+                    aiResultBox.classList.remove('hidden');
+
+                    // Grant 10 Normal Boxes & 100 Points
+                    state.normalBoxes += 10;
+                    state.points += 100;
+                    
+                    // Increment 7-day streak
+                    state.streakDays = (state.streakDays || 1) + 1;
+                    if (state.streakDays >= 7) {
+                        state.diamondBoxes += 5;
+                        showToast("🎉 7일 연속 출석 달성! 다이아 상자 5개 추가 지급!");
+                        state.streakDays = 1;
+                    } else {
+                        showToast("📸 인증 완수! 보통 상자 10개가 보관함에 지급되었습니다!");
+                    }
+                    saveState();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Inject Test Data (Boxes Only)
+        btnInjectTestData.addEventListener('click', () => {
+            state.normalBoxes += 10;
+            state.diamondBoxes += 5;
+            saveState();
+            showToast("🎁 테스트 상자(보통 10개, 다이아 5개)가 지급되었습니다!");
+        });
+
+        // Box Click Events
+        btnOpenNormalBox.addEventListener('click', () => openContinuousBoxes('normal'));
+        btnOpenDiamondBox.addEventListener('click', () => openContinuousBoxes('diamond'));
+
+        // Ad Watch 2x Reward Trigger
+        btnWatchAdDouble.addEventListener('click', () => {
+            boxRewardModal.classList.add('hidden');
+            adModal.classList.remove('hidden');
+
+            let countdown = 3;
+            adCountdown.textContent = countdown;
+
+            const timer = setInterval(() => {
+                countdown -= 1;
+                adCountdown.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    adModal.classList.add('hidden');
+
+                    // Double the coins
+                    state.coins += lastEarnedCoins;
+                    saveState();
+                    showToast(`🎬 광고 시청 완료! 추가로 +${lastEarnedCoins} 코인(총 2배)을 받았습니다!`);
+                }
+            }, 1000);
+        });
+
+        btnCloseBoxModal.addEventListener('click', () => {
+            boxRewardModal.classList.add('hidden');
+        });
+
+        // Login Handling
+        function completeLogin(name) {
+            state.nickname = name;
+            saveState();
+            loginModal.classList.add('hidden');
+            showToast(`${name}님 환영합니다!`);
+        }
+
+        btnStart.addEventListener('click', () => {
+            const val = inputNickname.value.trim();
+            if (!val) {
+                showToast("닉네임을 입력해 주세요!");
+                return;
+            }
+            completeLogin(val);
+        });
+
+        btnGuestLogin.addEventListener('click', () => {
+            const guestName = "게스트_" + Math.floor(1000 + Math.random() * 9000);
+            completeLogin(guestName);
+        });
+
+        btnGoogleLogin.addEventListener('click', async () => {
+            if (isFirebaseActive && auth) {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    const result = await signInWithPopup(auth, provider);
+                    const user = result.user;
+                    const googleName = user.displayName || user.email.split('@')[0];
+                    completeLogin(googleName);
+                } catch(e) {
+                    showToast("구글 로그인 실패 또는 취소되었습니다.");
+                }
+            } else {
+                showToast("Firebase 키를 설정하면 구글 로그인 기능이 작동합니다!");
+            }
+        });
+
+        // Tab Switching
+        function switchTab(target) {
+            tabAuth.classList.add('hidden');
+            tabBoxes.classList.add('hidden');
+            tabRanking.classList.add('hidden');
+
+            navTabAuth.className = "flex-1 py-2 flex flex-col items-center gap-1 hover:text-emerald-600 transition text-slate-500";
+            navTabBoxes.className = "flex-1 py-2 flex flex-col items-center gap-1 hover:text-emerald-600 transition text-slate-500";
+            navTabRanking.className = "flex-1 py-2 flex flex-col items-center gap-1 hover:text-emerald-600 transition text-slate-500";
+
+            if (target === 'auth') {
+                tabAuth.classList.remove('hidden');
+                navTabAuth.className = "flex-1 py-2 flex flex-col items-center gap-1 text-emerald-600 font-bold";
+            } else if (target === 'boxes') {
+                tabBoxes.classList.remove('hidden');
+                navTabBoxes.className = "flex-1 py-2 flex flex-col items-center gap-1 text-emerald-600 font-bold";
+            } else if (target === 'ranking') {
+                tabRanking.classList.remove('hidden');
+                navTabRanking.className = "flex-1 py-2 flex flex-col items-center gap-1 text-emerald-600 font-bold";
+                renderRankings();
+            }
+        }
+
+        navTabAuth.addEventListener('click', () => switchTab('auth'));
+        navTabBoxes.addEventListener('click', () => switchTab('boxes'));
+        navTabRanking.addEventListener('click', () => switchTab('ranking'));
+
+        // Render Ranking List (Real Users Only)
+        function renderRankings() {
+            if (isFirebaseActive && db) {
+                const q = collection(db, "rankings");
+                onSnapshot(q, (snapshot) => {
+                    let list = [];
+                    snapshot.forEach((docSnap) => {
+                        list.push(docSnap.data());
+                    });
+                    displayRankingList(list);
+                });
+            } else {
+                let list = [];
+                if (state.nickname) {
+                    list.push({ nickname: state.nickname, coins: state.coins });
+                }
+                displayRankingList(list);
+            }
+        }
+
+        function displayRankingList(list) {
+            list.sort((a, b) => (b.coins || 0) - (a.coins || 0));
+            rankingList.innerHTML = '';
+
+            if (list.length === 0) {
+                rankingList.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">등록된 랭커가 없습니다.</div>`;
+                return;
+            }
+
+            list.forEach((item, index) => {
+                const isMe = item.nickname === state.nickname;
+                const rankNum = index + 1;
+
+                let medal = `<span class="w-6 text-center font-bold text-slate-500">${rankNum}</span>`;
+                if (rankNum === 1) medal = `<span class="w-6 text-center text-lg">🥇</span>`;
+                if (rankNum === 2) medal = `<span class="w-6 text-center text-lg">🥈</span>`;
+                if (rankNum === 3) medal = `<span class="w-6 text-center text-lg">🥉</span>`;
+
+                const row = document.createElement('div');
+                row.className = `p-3 flex justify-between items-center text-sm ${isMe ? 'bg-emerald-50/80 font-bold' : 'hover:bg-slate-50'}`;
+                
+                row.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        ${medal}
+                        <span class="text-slate-800">${item.nickname}</span>
+                        ${isMe ? '<span class="bg-emerald-500 text-white text-[10px] px-1.5 py-0.5 rounded-md ml-1 font-bold">나</span>' : ''}
+                    </div>
+                    <div class="text-amber-600 font-extrabold text-xs">
+                        ${(item.coins || 0).toLocaleString()} C
+                    </div>
+                `;
+                rankingList.appendChild(row);
+            });
+        }
+
+        // Initialize App Check
+        if (state.nickname) {
+            loginModal.classList.add('hidden');
+        }
+        updateUI();
+    </script>
+</body>
+</html>
